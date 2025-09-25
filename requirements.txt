@@ -1,2 +1,4 @@
 pywifi
 comtypes
+scapy
+pandas
