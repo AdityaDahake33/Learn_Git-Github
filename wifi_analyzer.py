@@ -68,6 +68,22 @@ def scan_wifi_networks():
                 print(f"  {i+1}. SSID: {network.ssid}, BSSID: {network.bssid}, Signal: {network.signal} dBm")
         time.sleep(10) # Wait for 10 seconds before the next scan
 
+def detect_malicious_activity(features):
+    # Placeholder for ML model detection
+    # In a real scenario, this would use the trained XGBoost model
+    # For demonstration, let's say a large UDP packet is 'malicious'
+    if features['protocol'] == 17 and \
+       features['dst_ip'] == '127.0.0.1' and \
+       features['dst_port'] == 5000 and \
+       features['len'] and features['len'] > 400 and features['len'] < 600: # Check for UDP to 127.0.0.1:5000 with length around 500
+        return True, "Simulated UDP Flood Detected"
+    return False, None
+
+def trigger_alert(alert_message, packet_features):
+    print(f"\n!!! ALERT !!! {alert_message}")
+    print(f"Malicious Packet Features: {packet_features}")
+    # In the future, this will send the alert to n8n
+
 def sniff_network_packets(iface_name):
     print(f"\nStarting packet sniffing on interface: {iface_name}")
     print("Press Ctrl+C to stop sniffing.")
@@ -77,6 +93,10 @@ def sniff_network_packets(iface_name):
         if features['protocol'] is not None: # Only process IP packets for now
             captured_features.append(features)
             print(f"Captured: {features}")
+            
+            is_malicious, alert_msg = detect_malicious_activity(features)
+            if is_malicious:
+                trigger_alert(alert_msg, features)
 
     try:
         sniff(iface=iface_name, prn=packet_callback, store=0, timeout=60) # Sniff for 60 seconds
